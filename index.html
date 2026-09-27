@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>经济学人音频下载</title>
+<style>
+  :root {
+    --bg: #f6f5f2;
+    --card: #ffffff;
+    --ink: #1b1b1a;
+    --muted: #6d6b66;
+    --line: #e6e3dc;
+    --accent: #b3261e;
+    --accent-ink: #ffffff;
+    --error: #b3261e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151514;
+      --card: #1e1e1c;
+      --ink: #ecebe7;
+      --muted: #9b9891;
+      --line: #2e2d2a;
+      --accent: #e0574d;
+      --accent-ink: #1b0b09;
+      --error: #f08a80;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+  }
+  [hidden] { display: none !important; }
+  main { max-width: 720px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 6px; letter-spacing: .01em; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+  button { font: inherit; cursor: pointer; }
+
+  .gate { display: flex; gap: 8px; max-width: 420px; }
+  .gate input {
+    flex: 1; min-width: 0; font: inherit; font-size: 17px; letter-spacing: .06em; text-transform: uppercase;
+    padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink);
+  }
+  .gate input::placeholder { letter-spacing: .04em; text-transform: none; color: var(--muted); opacity: .7; }
+  .gate input:focus { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .gate button, .dl {
+    flex: none; border: 0; font-size: 14px; font-weight: 600;
+    background: var(--accent); color: var(--accent-ink); padding: 7px 14px; border-radius: 8px;
+  }
+  .gate button { padding: 10px 18px; border-radius: 10px; font-size: 15px; }
+  .gate button:disabled { opacity: .6; cursor: wait; }
+  .msg { min-height: 1.5em; margin: 10px 0 0; font-size: 14px; color: var(--error); }
+
+  .status {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 14px; margin: 0 0 20px; font-size: 14px;
+  }
+  .status strong { font-variant-numeric: tabular-nums; }
+  .status .note { color: var(--muted); }
+  .status .link { margin-left: auto; background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; font-size: 14px; }
+  .status.alert { border-color: var(--error); }
+
+  .years { display: flex; gap: 8px; margin: 0 0 20px; flex-wrap: wrap; }
+  .years button {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 6px 14px; border-radius: 999px; font-size: 14px;
+  }
+  .years button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .month { font-size: 13px; font-weight: 600; color: var(--muted); margin: 24px 4px 8px; letter-spacing: .04em; }
+  ul { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  li { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-top: 1px solid var(--line); }
+  li:first-child { border-top: 0; }
+  .date { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 5.2em; }
+  .title { flex: 1; min-width: 0; color: var(--muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; color: var(--accent); border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; margin-left: 6px; vertical-align: 1px; }
+  .dl:hover { filter: brightness(1.08); }
+  .dl:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .dl:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; filter: none; }
+  footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
+  footer p { margin: 6px 0; }
+  @media (max-width: 520px) {
+    li { flex-wrap: wrap; gap: 2px 12px; }
+    .date { min-width: 0; }
+    .title { order: 3; flex-basis: 100%; white-space: normal; }
+    .dl { margin-left: auto; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>经济学人音频下载</h1>
+  <p class="sub" id="loading">正在加载…</p>
+
+  <section id="gate" hidden>
+    <p class="sub">请输入密钥后使用。</p>
+    <form class="gate" id="gate-form" autocomplete="off">
+      <input id="key" name="key" placeholder="XXXX-XXXX-XXXX-XXXX" aria-label="密钥" spellcheck="false" autocapitalize="characters" autocorrect="off" required>
+      <button type="submit" id="enter">进入</button>
+    </form>
+    <p class="msg" id="msg" role="alert"></p>
+  </section>
+
+  <section id="app" hidden>
+    <p class="sub" id="sub"></p>
+    <div class="status" id="status" role="status">
+      <span id="status-text"></span>
+      <span class="note">同一期重复下载不扣次数</span>
+      <button type="button" class="link" id="logout">退出</button>
+    </div>
+    <div class="years" id="years" hidden></div>
+    <div id="list"></div>
+  </section>
+
+  <footer>
+    <p>点击「下载」后，浏览器会直接从经济学人官方服务器下载整期音频（zip 压缩包，内含全部 MP3），页面不会跳转。</p>
+    <p>下载的文件名是一串字母加 <code>-audio.zip</code>，由官方服务器决定；按上面的日期对应即可。</p>
+    <p>非官方工具，仅供订阅者个人学习使用。</p>
+  </footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  // 加密算法与 scripts/lib.mjs 保持一致
+  var CDN = "https://www.economist.com/mobile-assets/";
+  var KEY_STORE = "ea-key";
+  var SEEN_STORE = "ea-seen";
+  var subtle = window.crypto && window.crypto.subtle;
+  var enc = new TextEncoder();
+  var dec = new TextDecoder();
+  var ECDH = { name: "ECDH", namedCurve: "P-256" };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var keys = null, vault = null, offset = 0, session = null;
+
+  function store(name, value) {
+    try {
+      if (value == null) localStorage.removeItem(name); else localStorage.setItem(name, value);
+    } catch (e) {}
+  }
+  function load(name) {
+    try { return localStorage.getItem(name); } catch (e) { return null; }
+  }
+
+  function normalize(s) {
+    return String(s).toUpperCase().replace(/[^0-9A-Z]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");
+  }
+  function unb64(s) {
+    var bin = atob(s), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  async function sha256hex(text) {
+    var bytes = new Uint8Array(await subtle.digest("SHA-256", enc.encode(text)));
+    return Array.from(bytes, function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+  }
+  function fmtDay(ms) {
+    var d = new Date(ms);
+    return d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日";
+  }
+
+  // 用 GitHub 服务器的时间判断是否过期，改本机时钟无效
+  function now() {
+    var seen = Number(load(SEEN_STORE)) || 0;
+    return Math.max(Date.now() + offset, seen);
+  }
+
+  async function fetchJSON(url, cache) {
+    var res = await fetch(url, { cache: cache });
+    if (!res.ok) throw new Error(url + " " + res.status);
+    var server = Date.parse(res.headers.get("Date"));
+    if (server) {
+      offset = server - Date.now();
+      if (server > (Number(load(SEEN_STORE)) || 0)) store(SEEN_STORE, String(server));
+    }
+    return res.json();
+  }
+
+  async function openKey(norm) {
+    var id = (await sha256hex("economist-audio:" + norm)).slice(0, 20);
+    var box = keys[id];
+    if (!box) throw new Error("密钥不正确，或已被作废");
+    try {
+      var base = await subtle.importKey("raw", enc.encode(norm), "PBKDF2", false, ["deriveKey"]);
+      var aes = await subtle.deriveKey(
+        { name: "PBKDF2", salt: unb64(box.s), iterations: 100000, hash: "SHA-256" },
+        base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+      var plain = await subtle.decrypt({ name: "AES-GCM", iv: unb64(box.i) }, aes, unb64(box.c));
+      var payload = JSON.parse(dec.decode(plain));
+      payload.id = id;
+      return payload;
+    } catch (e) {
+      throw new Error("密钥不正确");
+    }
+  }
+
+  async function openYear(priv, box) {
+    var pub = await subtle.importKey("jwk", { kty: "EC", crv: "P-256", x: box.k.x, y: box.k.y }, ECDH, false, []);
+    var bits = await subtle.deriveBits({ name: "ECDH", public: pub }, priv, 256);
+    var hk = await subtle.importKey("raw", bits, "HKDF", false, ["deriveKey"]);
+    var aes = await subtle.deriveKey(
+      { name: "HKDF", hash: "SHA-256", salt: enc.encode("ea-vault-v1"), info: enc.encode("economist-audio") },
+      hk, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    var plain = await subtle.decrypt({ name: "AES-GCM", iv: unb64(box.i) }, aes, unb64(box.c));
+    return JSON.parse(dec.decode(plain));
+  }
+
+  async function unlock(input) {
+    var norm = normalize(input);
+    if (norm.length !== 16) throw new Error("密钥应为 16 位字母和数字");
+    var payload = await openKey(norm);
+    if (now() > payload.e) throw new Error("这个密钥已于 " + fmtDay(payload.e) + " 过期");
+    var priv = await subtle.importKey("jwk", payload.d, ECDH, false, ["deriveBits"]);
+    var years = {};
+    for (var year in vault.years) years[year] = await openYear(priv, vault.years[year]);
+    store(KEY_STORE, norm);
+    session = { id: payload.id, exp: payload.e, max: payload.m, years: years };
+  }
+
+  // 下载记录只存在本机浏览器：同一期只扣一次
+  function usedList() {
+    try { return JSON.parse(load("ea-used-" + session.id)) || []; } catch (e) { return []; }
+  }
+
+  function renderStatus(alert) {
+    var left = Math.max(0, session.max - usedList().length);
+    $("status-text").innerHTML = "";
+    var t = $("status-text");
+    t.append("有效期至 " + fmtDay(session.exp) + " · 剩余 ");
+    var b = document.createElement("strong");
+    b.textContent = left + " 次";
+    t.append(b, "下载");
+    $("status").classList.toggle("alert", !!alert);
+    if (alert) t.append("　" + alert);
+    var used = usedList();
+    document.querySelectorAll(".dl").forEach(function (btn) {
+      btn.disabled = left === 0 && used.indexOf(btn.dataset.date) < 0;
+      btn.title = btn.disabled ? "下载次数已用完" : "";
+    });
+  }
+
+  function download(issue) {
+    if (now() > session.exp) {
+      lock("这个密钥已于 " + fmtDay(session.exp) + " 过期");
+      return;
+    }
+    var used = usedList();
+    if (used.indexOf(issue.date) < 0) {
+      if (used.length >= session.max) { renderStatus("下载次数已用完"); return; }
+      used.push(issue.date);
+      store("ea-used-" + session.id, JSON.stringify(used));
+    }
+    var a = document.createElement("a");
+    a.href = CDN + issue.id + "-audio.zip";
+    a.rel = "noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    renderStatus();
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function render(year) {
+    var years = Object.keys(session.years).sort().reverse();
+    var issues = session.years[year];
+    $("sub").textContent = year + " 年全部周刊音频 · 共 " + issues.length + " 期 · 列表更新于 " + vault.updated;
+    Array.prototype.forEach.call($("years").children, function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.year === year));
+    });
+    var list = $("list");
+    list.textContent = "";
+    var month = null, ul = null;
+    issues.forEach(function (issue, i) {
+      var m = Number(issue.date.slice(5, 7));
+      if (m !== month) {
+        month = m;
+        list.appendChild(el("h2", "month", m + " 月"));
+        ul = list.appendChild(el("ul"));
+      }
+      var li = el("li");
+      var date = el("span", "date", m + "月" + Number(issue.date.slice(8, 10)) + "日");
+      if (i === 0 && year === years[0]) date.appendChild(el("span", "tag", "最新"));
+      li.appendChild(date);
+      li.appendChild(el("span", "title", issue.title));
+      var btn = el("button", "dl", "下载");
+      btn.type = "button";
+      btn.dataset.date = issue.date;
+      btn.setAttribute("aria-label", "下载 " + issue.date + " 期音频");
+      btn.addEventListener("click", function () { download(issue); });
+      li.appendChild(btn);
+      ul.appendChild(li);
+    });
+    renderStatus();
+  }
+
+  function showApp() {
+    var years = Object.keys(session.years).sort().reverse();
+    var bar = $("years");
+    bar.textContent = "";
+    if (years.length > 1) {
+      years.forEach(function (y) {
+        var b = el("button", null, y + " 年");
+        b.type = "button";
+        b.dataset.year = y;
+        b.addEventListener("click", function () { render(y); });
+        bar.appendChild(b);
+      });
+    }
+    bar.hidden = years.length < 2;
+    $("loading").hidden = true;
+    $("gate").hidden = true;
+    $("app").hidden = false;
+    if (years.length) render(years[0]);
+    else $("sub").textContent = "暂无期刊数据";
+  }
+
+  function lock(message) {
+    session = null;
+    store(KEY_STORE, null);
+    $("list").textContent = "";
+    $("app").hidden = true;
+    $("loading").hidden = true;
+    $("gate").hidden = false;
+    $("msg").textContent = message || "";
+    $("key").value = "";
+    $("key").focus();
+  }
+
+  $("gate-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var btn = $("enter");
+    btn.disabled = true;
+    $("msg").textContent = "";
+    try {
+      await unlock($("key").value);
+      showApp();
+    } catch (err) {
+      $("msg").textContent = err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  $("logout").addEventListener("click", function () { lock(""); });
+
+  (async function start() {
+    if (!subtle) {
+      $("loading").textContent = "浏览器不支持，请换用最新版 Chrome、Safari 或 Edge 打开。";
+      return;
+    }
+    try {
+      var loaded = await Promise.all([fetchJSON("data/keys.json", "no-store"), fetchJSON("data/vault.json", "no-cache")]);
+      keys = loaded[0];
+      vault = loaded[1];
+    } catch (e) {
+      $("loading").textContent = "加载失败，请检查网络后刷新页面。";
+      return;
+    }
+    var saved = load(KEY_STORE);
+    if (saved) {
+      try {
+        await unlock(saved);
+        showApp();
+        return;
+      } catch (err) {
+        lock(err.message);
+        return;
+      }
+    }
+    lock("");
+  })();
+})();
+</script>
+</body>
+</html>

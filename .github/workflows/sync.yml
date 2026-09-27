@@ -1,0 +1,27 @@
+name: 同步期刊列表
+
+on:
+  schedule:
+    - cron: "0 3 * * 5,6"   # 每周五、六 UTC 3:00（北京时间 11:00）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # 只用 data/vault.json 里的公钥加密，不需要任何密钥或 Secret
+      - run: node scripts/sync.mjs
+      - name: 有新一期就提交
+        run: |
+          if git diff --quiet -- data/vault.json; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git commit -am "同步期刊列表 $(date -u +%F)"
+          git push
