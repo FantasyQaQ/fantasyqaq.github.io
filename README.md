@@ -26,4 +26,4 @@ node scripts/keys.mjs revoke XXXX-XXXX-XXXX-XXXX
 node scripts/sync.mjs 2025             # 加入 2025 年
 ```
 
-列表来源：[The-Economist-Audio-List](https://github.com/jingking/The-Economist-Audio-List)。
+
